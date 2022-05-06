@@ -146,10 +146,10 @@ class AlbumsHandler {
 
       try {
         await this.service.getAlbumLike(credentialId, id);
-        await this.service.deleteAlbumLikes(credentialId, id);
+        await this.service.deleteAlbumLike(credentialId, id);
         message += ' batal disukai';
       } catch (error) {
-        await this.service.addAlbumLikes(credentialId, id);
+        await this.service.addAlbumLike(credentialId, id);
         message += ' disukai';
       }
 

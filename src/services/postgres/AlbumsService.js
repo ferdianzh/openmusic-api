@@ -5,8 +5,9 @@ const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
 
 class AlbumService {
-  constructor() {
+  constructor(cacheService) {
     this.pool = new Pool();
+    this.cacheService = cacheService;
   }
 
   async addAlbum({ name, year, cover }) {
@@ -96,7 +97,7 @@ class AlbumService {
     return result.rows;
   }
 
-  async addAlbumLikes(userId, albumId) {
+  async addAlbumLike(userId, albumId) {
     const id = `like-${nanoid(16)}`;
 
     const query = {
@@ -113,7 +114,7 @@ class AlbumService {
     return result.rows[0].id;
   }
 
-  async deleteAlbumLikes(userId, albumId) {
+  async deleteAlbumLike(userId, albumId) {
     const query = {
       text: 'DELETE FROM user_album_likes WHERE user_id = $1 AND album_id = $2 RETURNING id',
       values: [userId, albumId],
