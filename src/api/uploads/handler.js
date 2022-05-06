@@ -25,7 +25,6 @@ class UploadsHandler {
         message: 'Sampul berhasil diunggah',
       }).code(201);
     } catch (error) {
-      console.error(error);
       if (error instanceof ClientError) {
         return h.response({
           status: 'fail',

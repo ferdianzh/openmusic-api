@@ -96,7 +96,6 @@ class SongsHandler {
         }).code(error.statusCode);
       }
 
-      console.error(error.message);
       return h.response({
         status: 'error',
         message: 'Maaf, terjadi kesalahan pada server',
