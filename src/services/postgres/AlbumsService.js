@@ -111,6 +111,7 @@ class AlbumService {
       throw new InvariantError('Suka gagal ditambahkan');
     }
 
+    await this.cacheService.delete(`albums:${albumId}`);
     return result.rows[0].id;
   }
 
@@ -125,6 +126,8 @@ class AlbumService {
     if (!result.rows.length) {
       throw new InvariantError('Suka gagal dihapus');
     }
+
+    await this.cacheService.delete(`albums:${albumId}`);
   }
 
   async getAlbumLike(userId, albumId) {
@@ -143,18 +146,28 @@ class AlbumService {
   }
 
   async getAlbumAllLikes(id) {
-    const query = {
-      text: 'SELECT COUNT(*)::int AS likes FROM user_album_likes WHERE album_id = $1',
-      values: [id],
-    };
+    try {
+      const result = await this.cacheService.get(`albums:${id}`);
+      return {
+        cache: true,
+        ...JSON.parse(result),
+      };
+    } catch (error) {
+      const query = {
+        text: 'SELECT COUNT(*)::int AS likes FROM user_album_likes WHERE album_id = $1',
+        values: [id],
+      };
 
-    const result = await this.pool.query(query);
+      const result = await this.pool.query(query);
 
-    if (!result.rows.length) {
-      throw NotFoundError('Playlist tidak ditemukan');
+      if (!result.rows.length) {
+        throw NotFoundError('Album tidak ditemukan');
+      }
+
+      await this.cacheService.set(`albums:${id}`, JSON.stringify(result.rows[0]));
+
+      return result.rows[0];
     }
-
-    return result.rows[0];
   }
 }
 
