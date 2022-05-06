@@ -1,5 +1,11 @@
 /* eslint-disable camelcase */
 
+const mapAlbumToModel = ({
+  id, name, year, cover,
+}) => ({
+  id, name, year, coverUrl: cover,
+});
+
 const mapSongToDetailedModel = ({
   id,
   title,
@@ -18,4 +24,4 @@ const mapSongToDetailedModel = ({
   albumId: album_id,
 });
 
-module.exports = { mapSongToDetailedModel };
+module.exports = { mapAlbumToModel, mapSongToDetailedModel };
