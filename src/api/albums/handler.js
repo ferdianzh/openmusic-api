@@ -1,4 +1,5 @@
 const ClientError = require('../../exceptions/ClientError');
+const AuthenticationError = require('../../exceptions/AuthenticationError');
 
 class AlbumsHandler {
   constructor(service, validator) {
@@ -10,14 +11,17 @@ class AlbumsHandler {
     this.getAlbumByIdHandler = this.getAlbumByIdHandler.bind(this);
     this.putAlbumByIdHandler = this.putAlbumByIdHandler.bind(this);
     this.deleteAlbumByIdHandler = this.deleteAlbumByIdHandler.bind(this);
+
+    this.postAlbumLikesHandler = this.postAlbumLikesHandler.bind(this);
+    this.getAlbumLikesHandler = this.getAlbumLikesHandler.bind(this);
   }
 
   async postAlbumHandler(request, h) {
     try {
       this.validator.validateAlbumPayload(request.payload);
-      const { name, year } = request.payload;
+      const { name, year, cover = null } = request.payload;
 
-      const albumId = await this.service.addAlbum({ name, year });
+      const albumId = await this.service.addAlbum({ name, year, cover });
 
       return h.response({
         status: 'success',
@@ -81,9 +85,9 @@ class AlbumsHandler {
     try {
       this.validator.validateAlbumPayload(request.payload);
       const { id } = request.params;
-      const { name, year } = request.payload;
+      const { name, year, cover } = request.payload;
 
-      await this.service.editAlbumById(id, { name, year });
+      await this.service.editAlbumById(id, { name, year, cover });
 
       return {
         status: 'success',
@@ -118,6 +122,72 @@ class AlbumsHandler {
         return h.response({
           status: 'fail',
           message: 'Album gagal dihapus. Id tidak ditemukan.',
+        }).code(error.statusCode);
+      }
+
+      return h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kesalahan pada server',
+      }).code(500);
+    }
+  }
+
+  async postAlbumLikesHandler(request, h) {
+    try {
+      const { id } = request.params;
+      await this.service.getAlbumById(id);
+
+      const { id: credentialId } = request.auth.credentials;
+      if (!credentialId) {
+        throw new AuthenticationError('Login untuk menyukai');
+      }
+
+      let message = 'Album';
+
+      try {
+        await this.service.getAlbumLike(credentialId, id);
+        await this.service.deleteAlbumLikes(credentialId, id);
+        message += ' batal disukai';
+      } catch (error) {
+        await this.service.addAlbumLikes(credentialId, id);
+        message += ' disukai';
+      }
+
+      return h.response({
+        status: 'success',
+        message,
+      }).code(201);
+    } catch (error) {
+      if (error instanceof ClientError) {
+        return h.response({
+          status: 'fail',
+          message: error.message,
+        }).code(error.statusCode);
+      }
+
+      return h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kesalahan pada server',
+      }).code(500);
+    }
+  }
+
+  async getAlbumLikesHandler(request, h) {
+    try {
+      const { id } = request.params;
+      const { likes } = await this.service.getAlbumAllLikes(id);
+
+      return h.response({
+        status: 'success',
+        data: {
+          likes,
+        },
+      }).code(200);
+    } catch (error) {
+      if (error instanceof ClientError) {
+        return h.response({
+          status: 'fail',
+          message: error.message,
         }).code(error.statusCode);
       }
 

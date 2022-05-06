@@ -127,11 +127,9 @@ class AlbumService {
   }
 
   async getAlbumLike(userId, albumId) {
-    const id = `like-${nanoid(16)}`;
-
     const query = {
       text: 'SELECT * FROM user_album_likes WHERE user_id = $1 AND album_id = $2',
-      values: [id, userId, albumId],
+      values: [userId, albumId],
     };
 
     const result = await this.pool.query(query);
@@ -140,12 +138,12 @@ class AlbumService {
       throw new NotFoundError('Suka tidak ditemukan');
     }
 
-    return result.rows;
+    return result.rows[0];
   }
 
   async getAlbumAllLikes(id) {
     const query = {
-      text: 'SELECT COUNT(id) as likes FROM user_album_likes WHERE album_id = $1',
+      text: 'SELECT COUNT(*)::int AS likes FROM user_album_likes WHERE album_id = $1',
       values: [id],
     };
 
@@ -155,7 +153,7 @@ class AlbumService {
       throw NotFoundError('Playlist tidak ditemukan');
     }
 
-    return result.rows;
+    return result.rows[0];
   }
 }
 
